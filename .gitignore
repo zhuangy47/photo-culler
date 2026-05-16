@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# PyInstaller intermediates — the final .app / .exe / binary lives in dist/
+build/
+# macOS COLLECT staging folder (BUNDLE wraps this into Culler.app — only the .app is the final artifact).
+# Trailing slash means we only ignore the directory, not the single-file Linux binary at dist/culler.
+dist/culler/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
