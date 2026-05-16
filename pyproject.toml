@@ -1,0 +1,24 @@
+[project]
+name = "culler"
+version = "0.1.0"
+description = "A fast, simple cross-platform photo culler."
+requires-python = ">=3.10"
+dependencies = [
+    "PySide6>=6.6",
+    "rawpy>=0.21",
+    "Pillow>=10",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6.0"]
+
+[project.scripts]
+culler = "culler.app:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["culler*"]

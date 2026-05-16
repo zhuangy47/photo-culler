@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: culler
+Version: 0.1.0
+Summary: A fast, simple cross-platform photo culler.
+Requires-Python: >=3.10
+Requires-Dist: PySide6>=6.6
+Requires-Dist: rawpy>=0.21
+Requires-Dist: Pillow>=10
+Requires-Dist: numpy>=1.24
