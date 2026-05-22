@@ -13,15 +13,25 @@ i'm working on building it for macos and windows. life has been busy :/
 
 ## how does the app work
 you create culling "sessions". in each session you open folders with photos. files with the same name in the same folder are moved as one unit.
+
 arrows keys to move between images. 
+
 brackets to zoom.
+
 ctrl/cmd+arrows to pan.
+
 ctrl/cmd+shift+1-9 to save the current zoom level.
+
 ctrl/cmd+1-9 to recall that zoom level.
+
 ctrl/cmd+0 to reset zoom/pan.
+
 ctrl+L toggles sticky mode (keep zoom between images)
+
 ctrl/cmd+Z to undo last cull.
 
-the goal is for this culler to be easy to use with only the keyboard and to be faster than lightroom and at least as fast as photo mechanic.
+
+
+the goal is for this culler to be easy to use with only the keyboard and to be faster than lightroom library and at least as fast as photo mechanic.
 
 i tried to do some clever caching things. it kinda works™
