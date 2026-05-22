@@ -23,3 +23,5 @@ ctrl+L toggles sticky mode (keep zoom between images)
 ctrl/cmd+Z to undo last cull.
 
 the goal is for this culler to be easy to use with only the keyboard and to be faster than lightroom and at least as fast as photo mechanic.
+
+i tried to do some clever caching things. it kinda works™
