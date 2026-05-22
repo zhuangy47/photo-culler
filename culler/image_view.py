@@ -26,7 +26,6 @@ class ImageView(QGraphicsView):
         self.setScene(self._scene)
         self._item: QGraphicsPixmapItem | None = None
         self._zoom = 1.0
-        self._pending_fit = False
 
         self.setRenderHints(
             QPainter.RenderHint.SmoothPixmapTransform | QPainter.RenderHint.Antialiasing
@@ -56,14 +55,12 @@ class ImageView(QGraphicsView):
         if restore_state is not None:
             self.apply_view_state(restore_state)
         else:
-            self._pending_fit = True
             self.fit()
 
     def clear(self):
         self._scene.clear()
         self._item = None
         self._zoom = 1.0
-        self._pending_fit = False
 
     def has_image(self) -> bool:
         return self._item is not None
@@ -85,9 +82,6 @@ class ImageView(QGraphicsView):
             return
         self.setTransform(state.transform)
         self._zoom = state.zoom
-        # Scrollbar ranges depend on the scene/viewport geometry, which may not
-        # be finalized yet. Defer the scroll values until after layout.
-        self._pending_fit = False
         self.horizontalScrollBar().setValue(state.h_scroll)
         self.verticalScrollBar().setValue(state.v_scroll)
 
@@ -99,7 +93,6 @@ class ImageView(QGraphicsView):
         self.resetTransform()
         self.fitInView(self._item, Qt.AspectRatioMode.KeepAspectRatio)
         self._zoom = 1.0
-        self._pending_fit = False
 
     def zoom_in(self):
         self._apply_zoom(self.ZOOM_STEP)
@@ -140,7 +133,7 @@ class ImageView(QGraphicsView):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self._pending_fit or self._zoom == 1.0:
+        if self._zoom == 1.0:
             self.fit()
 
     def keyPressEvent(self, event):

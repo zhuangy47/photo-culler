@@ -35,8 +35,22 @@ def scan(folder: Path) -> list[ImagePair]:
             by_stem.setdefault(p.stem, {})["jpeg"] = p
         elif ext in RAW_EXTS:
             by_stem.setdefault(p.stem, {})["raw"] = p
-    pairs: list[ImagePair] = []
-    for stem in sorted(by_stem):
-        files = by_stem[stem]
-        pairs.append(ImagePair(stem=stem, jpeg=files.get("jpeg"), raw=files.get("raw")))
-    return pairs
+    return [
+        ImagePair(stem=stem, jpeg=files.get("jpeg"), raw=files.get("raw"))
+        for stem, files in sorted(by_stem.items())
+    ]
+
+
+def scan_many(folders: list[Path]) -> list[ImagePair]:
+    """Scan multiple folders and return a single concatenated pool.
+
+    Folder order is preserved; pairing only happens within a single folder
+    (two photos with the same stem in different folders are kept distinct).
+    """
+    out: list[ImagePair] = []
+    for f in folders:
+        try:
+            out.extend(scan(f))
+        except OSError:
+            continue
+    return out

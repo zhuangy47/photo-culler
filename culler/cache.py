@@ -31,11 +31,9 @@ class _LoadWorker(QRunnable):
 class ImageCache(QObject):
     """LRU cache with background prefetch.
 
-    Synchronous get_or_load() blocks the GUI; request() schedules a load on a worker
-    thread and emits image_ready when the QImage is in the cache.
+    get_or_load() loads synchronously, blocking the GUI on a miss; request()
+    schedules a load on a worker thread that populates the cache in the background.
     """
-
-    image_ready = Signal(str)  # path key
 
     MAX_ITEMS = 8
 
@@ -75,10 +73,14 @@ class ImageCache(QObject):
         for p in paths:
             self._cache.pop(str(p), None)
 
+    def clear(self):
+        # Inflight loads will still complete and store; that's fine — by then the
+        # cache will be repopulated on demand.
+        self._cache.clear()
+
     def _on_done(self, key: str, img: QImage):
         self._inflight.discard(key)
         self._store(key, img)
-        self.image_ready.emit(key)
 
     def _on_error(self, key: str, _msg: str):
         self._inflight.discard(key)
