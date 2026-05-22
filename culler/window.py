@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 
 from .appstate import AppState
 from .cache import ImageCache
+from .filmstrip import FilmstripView
 from .image_view import ImageView
 from .library import ImagePair, scan_many
 from .session import Session, ensure_session_suffix, session_display_name, SESSION_SUFFIX
@@ -249,7 +250,17 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(1, 0)
         splitter.setSizes([1200, 300])
 
-        self.setCentralWidget(splitter)
+        self.filmstrip = FilmstripView()
+        self.filmstrip.activated_index.connect(self._goto_index)
+        self.filmstrip.set_prefetch_all(self.app_state.prefetch_thumbnails)
+
+        central = QWidget()
+        central_lay = QVBoxLayout(central)
+        central_lay.setContentsMargins(0, 0, 0, 0)
+        central_lay.setSpacing(0)
+        central_lay.addWidget(splitter, 1)
+        central_lay.addWidget(self.filmstrip)
+        self.setCentralWidget(central)
 
         self.setStatusBar(QStatusBar())
         self._help_label = QLabel(
@@ -281,6 +292,12 @@ class MainWindow(QMainWindow):
         add("Save Session As…", QKeySequence.StandardKey.SaveAs, self._save_session_as)
         file_menu.addSeparator()
         add("Add Source Folder…", "Ctrl+Shift+O", self._add_source_folder)
+
+        view_menu = bar.addMenu("&View")
+        self.prefetch_act = QAction("Cache Thumbnails in Background", self, checkable=True)
+        self.prefetch_act.setChecked(self.app_state.prefetch_thumbnails)
+        self.prefetch_act.toggled.connect(self._on_toggle_prefetch)  # after setChecked
+        view_menu.addAction(self.prefetch_act)
 
     # ── Session lifecycle ──────────────────────────────────────────────────
 
@@ -494,6 +511,7 @@ class MainWindow(QMainWindow):
         self.sticky_label.setVisible(self.session.sticky_zoom)
         self.sources_panel.set_folders(self.session.folders)
         self.bindings_panel.set_bindings(self.session.bindings)
+        self.filmstrip.set_images(self.images)
         self._update_title()
         self._show_current()
 
@@ -508,7 +526,9 @@ class MainWindow(QMainWindow):
         self._update_status()
         if not self.images:
             self.view.clear()
+            self.filmstrip.set_current(-1)
             return
+        self.filmstrip.set_current(self.idx)
         pair = self.images[self.idx]
         path = pair.display_path
         try:
@@ -559,6 +579,13 @@ class MainWindow(QMainWindow):
         self.session.current_index = self.idx
         self._show_current()
 
+    def _goto_index(self, idx: int):
+        """Jump to an image picked from the filmstrip."""
+        if 0 <= idx < len(self.images) and idx != self.idx:
+            self.idx = idx
+            self.session.current_index = self.idx
+            self._show_current()
+
     # ── Culling / undo ─────────────────────────────────────────────────────
 
     def _cull(self, key: str):
@@ -590,7 +617,9 @@ class MainWindow(QMainWindow):
 
         self.undo_stack.append(op)
         self.cache.evict(*pair.all_paths)
+        culled = self.idx
         del self.images[self.idx]
+        self.filmstrip.remove_at(culled)
         if not self.images:
             self.idx = 0
         else:
@@ -612,6 +641,7 @@ class MainWindow(QMainWindow):
             return
         insert_at = min(op.source_index, len(self.images))
         self.images.insert(insert_at, op.pair)
+        self.filmstrip.insert_at(insert_at, op.pair)
         self.idx = insert_at
         self.session.current_index = self.idx
         self._show_current()
@@ -624,6 +654,13 @@ class MainWindow(QMainWindow):
         self.sticky_label.setVisible(new)
         self.statusBar().showMessage(f"Sticky zoom {'ON' if new else 'OFF'}", 2000)
         self._update_title()
+
+    def _on_toggle_prefetch(self, on: bool):
+        self.app_state.set_prefetch_thumbnails(on)
+        self.filmstrip.set_prefetch_all(on)
+        self.statusBar().showMessage(
+            f"Background thumbnail caching {'ON' if on else 'OFF'}", 2000
+        )
 
     def _save_preset(self, slot: int):
         state = self.view.get_view_state()
@@ -655,6 +692,7 @@ class MainWindow(QMainWindow):
             except OSError:
                 pass
         self.cache.shutdown()
+        self.filmstrip.shutdown()
         super().closeEvent(event)
 
     @staticmethod
